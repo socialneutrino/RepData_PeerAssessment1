@@ -27,7 +27,10 @@ median(total_steps$steps)
 
 ## What is the average daily activity pattern?
 
-
+```{r}
+dailyPattern <- aggregate(steps ~ interval, data = rawData, mean)
+with(dailyPattern, plot(interval, steps, type = "l", ylab = "Mean steps"))
+```
 
 ## Imputing missing values
 
