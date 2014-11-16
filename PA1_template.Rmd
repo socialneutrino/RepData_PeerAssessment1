@@ -4,10 +4,12 @@ output:
   html_document:
     keep_md: true
 ---
-
+# Reproducible Research: Peer Assessment 1
 
 ## Loading and preprocessing the data
 
+
+The original zip file from the repository has been unzipped. The data has been imported using the code below into the data frame ```rawData```
 
 ```{r}
 unzip("activity.zip")
@@ -20,7 +22,9 @@ rawData <- read.csv("activity.csv")
 ```{r}
 total_steps <- aggregate(steps ~ date, data = rawData, sum)
 hist(total_steps$steps, col = "red", main = "Histogram of total steps taken each day", xlab = "Total Steps", breaks = 50)
+
 mean(total_steps$steps)
+
 median(total_steps$steps)
 ```
 
@@ -30,15 +34,23 @@ median(total_steps$steps)
 ```{r}
 dailyPattern <- aggregate(steps ~ interval, data = rawData, mean)
 with(dailyPattern, plot(interval, steps, type = "l", ylab = "Mean steps"))
+```
 
+Below is the code to find the interval containing the maximum number of steps:
+```{r}
 dailyPattern[which.max(dailyPattern$steps),1]
 ```
 
 ## Imputing missing values
-
+```{r echo=FALSE}
+totalMissing <- sum(is.na(rawData))
+```
+The number of missing values (```NA```) in the data set is `r totalMissing `.
 ```{r}
-
 sum(is.na(rawData))
+```
+I have taken the strategy of imputing the missing values in the data set with the mean number of steps taken for the 5 minute interval, as calculated already in the data frame ```dailyPattern```. The code below shows the steps taken:
+```{r}
 dataImputed <- merge(rawData, dailyPattern, by="interval")
 
 for (i in seq_along(dataImputed$steps.x)) {
@@ -49,9 +61,38 @@ colnames(dataImputed) <- c("interval", "steps", "date")
 
 totalStepsImputed <- aggregate(steps ~ date, data = dataImputed, sum)
 hist(totalStepsImputed$steps, col = "red", main = "Histogram of total steps taken each day", xlab = "Total Steps", breaks = 50)
+```
 
+The result of imputing missing values in this way is that the mean total number of steps is unchanged, however the median total number of steps changes to become the same as the mean.
+```{r}
 mean(totalStepsImputed$steps)
+
 median(totalStepsImputed$steps)
 ```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```{r}
+weekendLogic <- weekdays(as.Date(dataImputed$date)) == "Saturday" | weekdays(as.Date(dataImputed$date)) == "Sunday"
+
+weekdayData <- cbind(dataImputed, weekday = !weekendLogic)
+
+for (i in seq_along(weekdayData$weekday)) {
+  if(weekdayData$weekday[i]) weekdayData$weekday[i] <- "weekday"
+	else weekdayData$weekday[i] <- "weekend"
+}
+
+weekdayData$weekday <- as.factor(weekdayData$weekday)
+```
+This is the how the first six rows of the new data set:
+```{r}
+head(weekdayData)
+```
+I have used a lattice plot to show the difference in pattern from the daily activity pattern on weekends and weekdays:
+```{r}
+library(lattice)
+weekdayPattern <- aggregate(steps ~ interval + weekday, data = weekdayData, mean)
+dayFig <- xyplot(steps ~ interval | weekday, data = weekdayPattern, layout = c(1, 2), type = "l", ylab = "number of steps")
+
+print(dayFig)
+```

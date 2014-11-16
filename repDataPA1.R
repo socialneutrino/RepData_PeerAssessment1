@@ -28,3 +28,20 @@ colnames(dataImputed) <- c("interval", "steps", "date")
 
 totalStepsImputed <- aggregate(steps ~ date, data = dataImputed, sum)
 hist(totalStepsImputed$steps, col = "red", main = "Histogram of total steps taken each day", xlab = "Total Steps", breaks = 50)
+
+#Weekday Analysis
+weekendLogic <- weekdays(as.Date(dataImputed$date)) == "Saturday" | weekdays(as.Date(dataImputed$date)) == "Sunday"
+weekdayData <- cbind(dataImputed, weekday = !weekendLogic)
+for (i in seq_along(weekdayData$weekday)) {
+	if(weekdayData$weekday[i]) weekdayData$weekday[i] <- "weekday"
+	else weekdayData$weekday[i] <- "weekend"
+}
+weekdayData$weekday <- as.factor(weekdayData$weekday)
+
+weekdayPattern <- aggregate(steps ~ interval + weekday, data = weekdayData, mean)
+dayFig <- xyplot(steps ~ interval | weekday, data = weekdayPattern, layout = c(1, 2), type = "l", ylab = "number of steps")
+print(dayFig)
+
+
+
+
